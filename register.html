@@ -47,32 +47,55 @@
   };
   $('addOther').onclick = () => addOther('');
 
+  // Fill a field only if the user has not typed into it while data was loading.
+  const prefill = (k, value) => { if (!form.elements[k].value) form.elements[k].value = value || ''; };
+  const submitBtn = $('submit');
+
   try {
     await R6P.init();
-    const friend = await liff.getFriendship();
-    if (!friend.friendFlag) { $('friend').hidden = false; $('friendLink').href = R6P.addFriendUrl(); }
+    // Show the form at once; member data arrives in the background (Apps Script can take seconds).
+    form.hidden = false;
+    addOther('');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'กำลังโหลดข้อมูล…';
+    $('status').textContent = 'กำลังโหลดข้อมูล…';
+    const slowHint = setTimeout(() => { $('status').textContent = 'ระบบกำลังเริ่มทำงาน อาจใช้เวลาสักครู่…'; }, 4000);
 
-    const me = await R6P.api('me');
+    const [friend, me] = await Promise.all([
+      liff.getFriendship().catch(() => null), // the add-friend banner is optional; never block on it
+      R6P.api('me')
+    ]);
+    clearTimeout(slowHint);
+    if (friend && !friend.friendFlag) { $('friend').hidden = false; $('friendLink').href = R6P.addFriendUrl(); }
     if (!me.ok) throw new Error(R6P.errorText(me));
     $('price').textContent = me.price;
     $('bank').textContent = me.bank_account_text;
-    if (me.status.pending) { $('status').textContent = '⏳ ใบสมัครของคุณอยู่ระหว่างตรวจสอบ ระบบจะแจ้งผลทางแชท LINE'; return; }
+    if (me.status.pending) {
+      form.hidden = true;
+      $('status').textContent = '⏳ ใบสมัครของคุณอยู่ระหว่างตรวจสอบ ระบบจะแจ้งผลทางแชท LINE';
+      return;
+    }
 
     if (me.member) {
-      for (const k of ['full_name', 'nickname', 'batch', 'phone', 'email', 're_company']) form.elements[k].value = me.member[k] || '';
-      me.member.other_occupations.forEach(addOther);
+      for (const k of ['full_name', 'nickname', 'batch', 'phone', 'email', 're_company']) prefill(k, me.member[k]);
+      const others = $('others');
+      const untouched = [...others.querySelectorAll('input')].every((i) => !i.value);
+      if (untouched && me.member.other_occupations.length) {
+        others.replaceChildren();
+        me.member.other_occupations.forEach(addOther);
+      }
     }
-    if (!$('others').children.length) addOther('');
     $('status').textContent = me.status.active
       ? 'คุณเป็นสมาชิกถึง ' + R6P.thaiDate(me.status.end_date) + ' — ต่ออายุได้เลย วันที่เหลือจะไม่หายไป'
       : (me.member ? 'ต่ออายุสมาชิก' : 'สมัครสมาชิกใหม่ (รอบละ 6 เดือน)');
-    form.hidden = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'ส่งใบสมัคร';
 
     const source = new URLSearchParams(location.search).get('src');
     form.onsubmit = async (e) => {
       e.preventDefault();
-      $('submit').disabled = true;
-      $('submit').textContent = 'กำลังส่ง…';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'กำลังส่ง…';
       try {
         const slip = await R6P.resizeImage(form.elements.slip.files[0]);
         const v = (k) => form.elements[k].value;
@@ -91,10 +114,11 @@
       } catch (err) {
         alert('ส่งไม่สำเร็จ: ' + err.message);
       }
-      $('submit').disabled = false;
-      $('submit').textContent = 'ส่งใบสมัคร';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'ส่งใบสมัคร';
     };
   } catch (err) {
+    form.hidden = true;
     $('status').textContent = 'เกิดข้อผิดพลาด: ' + err.message + ' — ลองเปิดหน้านี้ใหม่';
   }
 })();

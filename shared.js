@@ -20,7 +20,7 @@ const R6P = (() => {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action, idToken: liff.getIDToken() }, extra || {}))
     });
-    return res.json();
+    try { return await res.json(); } catch (e) { return { ok: false, error: 'NETWORK' }; } // e.g. Apps Script HTML error page
   }
 
   async function resizeImage(file, maxWidth = 1280) {
@@ -29,7 +29,10 @@ const R6P = (() => {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; // JPEG has no alpha: transparent PNG pixels would otherwise turn black
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     return { base64: dataUrl.split(',')[1], mime: 'image/jpeg' };
   }
@@ -40,8 +43,9 @@ const R6P = (() => {
   }
 
   function errorText(r) {
-    if (r.error === 'INVALID') return 'กรุณาตรวจสอบ: ' + r.fields.map((f) => FIELD_LABELS[f] || f).join(', ');
+    if (r.error === 'INVALID') return 'กรุณาตรวจสอบ: ' + (r.fields || []).map((f) => FIELD_LABELS[f] || f).join(', ');
     if (r.error === 'PENDING_EXISTS') return 'มีใบสมัครที่รอตรวจสอบอยู่แล้ว กรุณารอผลก่อน';
+    if (r.error === 'NETWORK') return 'เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
     if (r.error === 'UNAUTHORIZED') return 'เซสชันหมดอายุ กรุณาปิดแล้วเปิดหน้านี้ใหม่';
     return 'เกิดข้อผิดพลาด (' + r.error + ') กรุณาลองใหม่';
   }
