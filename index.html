@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="th">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R6P</title></head>
+<body>
+<p>กำลังเปิด…</p>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<script>
+  // LIFF opens the endpoint first; liff.init() performs the redirect to /register.html or /members.html.
+  liff.init({ liffId: window.R6P_CONFIG.LIFF_ID }).then(() => {
+    if (!new URLSearchParams(location.search).has('liff.state')) location.replace('register.html' + location.search);
+  });
+</script>
+</body>
+</html>

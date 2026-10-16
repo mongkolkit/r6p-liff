@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สมัครสมาชิก R6P Community</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>R6P Community</h1>
+  <p id="status" class="note">กำลังโหลด…</p>
+  <div id="friend" class="banner" hidden>กรุณาแอดบอท R6P เป็นเพื่อนก่อน เพื่อรับผลการสมัครทางแชท — <a id="friendLink">แอดบอท</a></div>
+  <form id="form" hidden>
+    <label>ชื่อ-นามสกุล *<input name="full_name" required autocomplete="name"></label>
+    <label>ชื่อเล่น *<input name="nickname" required></label>
+    <label>รุ่น R6P *<input name="batch" required inputmode="numeric"></label>
+    <label>เบอร์โทร *<input name="phone" required inputmode="tel" autocomplete="tel"></label>
+    <label>อีเมล<input name="email" type="email" autocomplete="email"></label>
+    <label>บริษัท / Brand ด้านอสังหา<input name="re_company"></label>
+    <fieldset>
+      <legend>บริษัท / อาชีพอื่นที่ไม่ใช่อสังหา (ใส่ได้หลายรายการ)</legend>
+      <div id="others"></div>
+      <button type="button" id="addOther">+ เพิ่ม</button>
+    </fieldset>
+    <div class="pay">ค่าสมาชิก 6 เดือน: <b id="price"></b> บาท
+<span id="bank"></span></div>
+    <label>สลิปโอนเงิน *<input name="slip" type="file" accept="image/*" required></label>
+    <label class="check"><input name="pdpa" type="checkbox" required>
+      <span>ยินยอมให้ R6P Community เก็บข้อมูลข้างต้นเพื่อบริหารสมาชิก โดยชื่อเล่น รุ่น บริษัท และอาชีพ จะแสดงให้สมาชิก active เห็น ส่วนชื่อ-นามสกุล เบอร์โทร อีเมล และสลิป เห็นเฉพาะกรรมการ</span></label>
+    <button type="submit" id="submit">ส่งใบสมัคร</button>
+  </form>
+</main>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  const addOther = (value) => {
+    const input = document.createElement('input');
+    input.name = 'other';
+    input.value = value || '';
+    input.placeholder = 'เช่น วิศวกร, นักบัญชี';
+    $('others').appendChild(input);
+  };
+  $('addOther').onclick = () => addOther('');
+
+  try {
+    await R6P.init();
+    const friend = await liff.getFriendship();
+    if (!friend.friendFlag) { $('friend').hidden = false; $('friendLink').href = R6P.addFriendUrl(); }
+
+    const me = await R6P.api('me');
+    if (!me.ok) throw new Error(R6P.errorText(me));
+    $('price').textContent = me.price;
+    $('bank').textContent = me.bank_account_text;
+    if (me.status.pending) { $('status').textContent = '⏳ ใบสมัครของคุณอยู่ระหว่างตรวจสอบ ระบบจะแจ้งผลทางแชท LINE'; return; }
+
+    if (me.member) {
+      for (const k of ['full_name', 'nickname', 'batch', 'phone', 'email', 're_company']) form.elements[k].value = me.member[k] || '';
+      me.member.other_occupations.forEach(addOther);
+    }
+    if (!$('others').children.length) addOther('');
+    $('status').textContent = me.status.active
+      ? 'คุณเป็นสมาชิกถึง ' + R6P.thaiDate(me.status.end_date) + ' — ต่ออายุได้เลย วันที่เหลือจะไม่หายไป'
+      : (me.member ? 'ต่ออายุสมาชิก' : 'สมัครสมาชิกใหม่ (รอบละ 6 เดือน)');
+    form.hidden = false;
+
+    const source = new URLSearchParams(location.search).get('src');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      $('submit').disabled = true;
+      $('submit').textContent = 'กำลังส่ง…';
+      try {
+        const slip = await R6P.resizeImage(form.elements.slip.files[0]);
+        const v = (k) => form.elements[k].value;
+        const r = await R6P.api('register', { form: {
+          full_name: v('full_name'), nickname: v('nickname'), batch: v('batch'), phone: v('phone'),
+          email: v('email'), re_company: v('re_company'),
+          other_occupations: [...form.querySelectorAll('input[name=other]')].map((i) => i.value),
+          source: source, pdpa: form.elements.pdpa.checked, slip: slip
+        } });
+        if (r.ok) {
+          form.hidden = true;
+          $('status').textContent = '✅ ส่งใบสมัครแล้ว รอเหรัญญิกตรวจสอบสลิป ระบบจะแจ้งผลทางแชท LINE';
+          return;
+        }
+        alert(R6P.errorText(r));
+      } catch (err) {
+        alert('ส่งไม่สำเร็จ: ' + err.message);
+      }
+      $('submit').disabled = false;
+      $('submit').textContent = 'ส่งใบสมัคร';
+    };
+  } catch (err) {
+    $('status').textContent = 'เกิดข้อผิดพลาด: ' + err.message + ' — ลองเปิดหน้านี้ใหม่';
+  }
+})();
+</script>
+</body>
+</html>

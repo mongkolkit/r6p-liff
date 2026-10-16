@@ -1,0 +1,20 @@
+:root { --brand: #1f3a68; --gold: #c9a227; --bg: #f5f7fb; --text: #1b1f24; --muted: #5b6573; --card: #ffffff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, "Sukhumvit Set", "Noto Sans Thai", sans-serif; }
+main { max-width: 560px; margin: 0 auto; padding: 16px; }
+h1 { color: var(--brand); font-size: 22px; margin: 8px 0 4px; }
+.note { color: var(--muted); }
+.banner { background: #fff7e0; border: 1px solid var(--gold); border-radius: 8px; padding: 12px; margin: 12px 0; }
+form, .card { background: var(--card); border-radius: 12px; padding: 16px; margin-top: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+input[type=text], input:not([type]), input[type=email], input[type=search] { width: 100%; padding: 10px; border: 1px solid #cdd3dc; border-radius: 8px; font: inherit; margin-top: 4px; }
+fieldset { border: 1px solid #cdd3dc; border-radius: 8px; margin: 12px 0; }
+#others input { margin-bottom: 6px; }
+.check { font-weight: 400; display: flex; gap: 8px; align-items: flex-start; }
+button { font: inherit; border-radius: 8px; padding: 10px 14px; border: 1px solid var(--brand); background: #fff; color: var(--brand); }
+button[type=submit] { width: 100%; background: var(--brand); color: #fff; margin-top: 16px; }
+button:disabled { opacity: .6; }
+.pay { background: #eef2f9; border-radius: 8px; padding: 8px 12px; margin-top: 12px; white-space: pre-line; }
+.member { border-bottom: 1px solid #e6e9ef; padding: 10px 0; }
+.member b { color: var(--brand); }
+.member small { color: var(--muted); display: block; }

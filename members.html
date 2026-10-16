@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Active Members — R6P</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Active Members</h1>
+  <p id="status" class="note">กำลังโหลด…</p>
+  <div id="join" class="card" hidden>
+    <p>รายชื่อสมาชิกเปิดให้เฉพาะสมาชิก active</p>
+    <button id="joinBtn" type="button">สมัครเลย</button>
+  </div>
+  <div id="listCard" class="card" hidden>
+    <input id="q" type="search" placeholder="ค้นหาชื่อเล่น รุ่น บริษัท อาชีพ">
+    <div id="list"></div>
+  </div>
+</main>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  // Render with textContent only: member-entered text must never be parsed as HTML.
+  const render = (members) => {
+    const list = $('list');
+    list.replaceChildren();
+    members.forEach((m) => {
+      const row = document.createElement('div');
+      row.className = 'member';
+      const name = document.createElement('b');
+      name.textContent = m.nickname + ' · รุ่น ' + m.batch;
+      const re = document.createElement('small');
+      re.textContent = 'อสังหา: ' + (m.re_company || '-');
+      const other = document.createElement('small');
+      other.textContent = 'อาชีพอื่น: ' + (m.other_occupations.length ? m.other_occupations.join(', ') : '-');
+      row.append(name, re, other);
+      list.appendChild(row);
+    });
+  };
+
+  try {
+    await R6P.init();
+    const r = await R6P.api('members');
+    if (!r.ok) throw new Error(R6P.errorText(r));
+    if (!r.active) {
+      $('status').textContent = 'ตอนนี้มีสมาชิก active ' + r.count + ' คน';
+      $('join').hidden = false;
+      $('joinBtn').onclick = () => location.assign('register.html');
+      return;
+    }
+    $('status').textContent = 'สมาชิก active ' + r.count + ' คน · คุณเป็นสมาชิกถึง ' + R6P.thaiDate(r.my_end_date);
+    $('listCard').hidden = false;
+    render(r.members);
+    $('q').oninput = (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      render(r.members.filter((m) =>
+        [m.nickname, m.batch, m.re_company].concat(m.other_occupations).join(' ').toLowerCase().includes(q)));
+    };
+  } catch (err) {
+    $('status').textContent = 'เกิดข้อผิดพลาด: ' + err.message + ' — ลองเปิดหน้านี้ใหม่';
+  }
+})();
+</script>
+</body>
+</html>
