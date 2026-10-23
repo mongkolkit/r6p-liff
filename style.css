@@ -15,6 +15,7 @@ button { font: inherit; border-radius: 8px; padding: 10px 14px; border: 1px soli
 button[type=submit] { width: 100%; background: var(--brand); color: #fff; margin-top: 16px; }
 button:disabled { opacity: .6; }
 .pay { background: #eef2f9; border-radius: 8px; padding: 8px 12px; margin-top: 12px; white-space: pre-line; }
+.pay .qr { display: block; width: 100%; max-width: 280px; margin: 8px auto 0; border-radius: 8px; }
 .member { border-bottom: 1px solid #e6e9ef; padding: 10px 0; }
 .member b { color: var(--brand); }
 .member small { color: var(--muted); display: block; }

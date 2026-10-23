@@ -24,7 +24,8 @@
       <button type="button" id="addOther">+ เพิ่ม</button>
     </fieldset>
     <div class="pay">ค่าสมาชิก 6 เดือน: <b id="price"></b> บาท
-<span id="bank"></span></div>
+โอนผ่าน PromptPay ด้วย QR ด้านล่าง (กดค้างที่รูปเพื่อบันทึก แล้วสแกนในแอปธนาคาร)
+<img class="qr" src="promptpay-qr.png" alt="QR PromptPay สำหรับโอนค่าสมาชิก"></div>
     <label>สลิปโอนเงิน *<input name="slip" type="file" accept="image/*" required></label>
     <label class="check"><input name="pdpa" type="checkbox" required>
       <span>ยินยอมให้ R6P Community เก็บข้อมูลข้างต้นเพื่อบริหารสมาชิก โดยชื่อเล่น รุ่น บริษัท และอาชีพ จะแสดงให้สมาชิก active เห็น ส่วนชื่อ-นามสกุล เบอร์โทร อีเมล และสลิป เห็นเฉพาะกรรมการ</span></label>
@@ -69,7 +70,6 @@
     if (friend && !friend.friendFlag) { $('friend').hidden = false; $('friendLink').href = R6P.addFriendUrl(); }
     if (!me.ok) throw new Error(R6P.errorText(me));
     $('price').textContent = me.price;
-    $('bank').textContent = me.bank_account_text;
     if (me.status.pending) {
       form.hidden = true;
       $('status').textContent = '⏳ ใบสมัครของคุณอยู่ระหว่างตรวจสอบ ระบบจะแจ้งผลทางแชท LINE';
